@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Show user</title>
+</head>
+<body>
+<!--in model i have the data about the user, id, name
+(id is used in transaction table as a foreign key to create a list of transaction for specific user)-->
+
+<!--i need to show the user -->
+<!--below should be option to see all transaction
+when clicked it will go to the page /transactions
+there the person can create a new transaction
+but does that mean that i will go immidietly to the page transaction without any sepcifications?
+i should be more precise and include the users/id/transactions right?-->
+
+<p>
+    User of finance tracker:
+    <span th:text="${user.getName()}"> Guest </span>.
+</p>
+
+<br>
+<hr>
+
+<form th:action="@{/users/{id}/transactions(id=${user.getId()})}" method="post" th:object="${transaction}">
+
+    <label for="amount">Enter amount of money</label>
+    <input type="text" th:field="*{amount}" id="amount"/>
+
+    <div style="color:red"
+         th:if="${#fields.hasErrors('amount')}"
+         th:errors="*{amount}">
+    </div>
+
+    <label for="description">Enter description</label>
+    <input type="text" th:field="*{description}" id="description"/>
+
+    <div style="color:red"
+         th:if="${#fields.hasErrors('description')}"
+         th:errors="*{description}">
+    </div>
+
+    <input type="submit" value="Create!"/>
+</form>
+
+<br>
+<hr>
+
+<h3>Transactions</h3>
+<!--gpt generated table-->
+<style>
+    .transactions-table {
+        border-collapse: collapse;
+        width: 100%;
+        font-family: Arial, sans-serif;
+        margin-top: 20px;
+    }
+
+    .transactions-table th {
+        border: 2px solid #333;
+        background-color: #2c3e50;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .transactions-table td {
+        border: 2px solid #555;
+        padding: 10px;
+        background-color: #f9f9f9;
+    }
+
+    .transactions-table tr:nth-child(even) td {
+        background-color: #ececec;
+    }
+
+    .transactions-table tr:hover td {
+        background-color: #d6eaf8;
+        transition: 0.2s;
+    }
+
+    .no-data {
+        text-align: center;
+        font-weight: bold;
+        color: #888;
+        background-color: #fff3cd;
+    }
+</style>
+
+
+<table class="transactions-table">
+
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Amount</th>
+        <th>Created At</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    <!-- if empty -->
+    <tr th:if="${transactions == null or #lists.isEmpty(transactions)}">
+        <td colspan="4" class="no-data">
+            No transactions found
+        </td>
+    </tr>
+
+    <!-- display transactions -->
+    <tr th:each="t, stat : ${transactions}">
+
+        <td th:text="${stat.count}">1</td>
+
+        <td th:text="${t.amount}">$0</td>
+
+        <td th:text="${#temporals.format(t.createdAt, 'yyyy-MM-dd HH:mm')}">
+            date
+        </td>
+
+        <td th:text="${t.description}">
+            description
+        </td>
+
+    </tr>
+
+    </tbody>
+
+</table>
+
+
+</body>
+</html>

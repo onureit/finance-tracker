@@ -1,0 +1,15 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Tomcat / SmartTomcat
+.smarttomcat/
+
+# Maven
+target/
+
+# Environment files
+.env
+
+# OS
+.DS_Store
