@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg2: #111118;
+            --bg3: #1a1a24;
+            --border: #2a2a3a;
+            --accent: #00e5a0;
+            --accent2: #7c6ff7;
+            --danger: #ff4d6d;
+            --text: #e8e8f0;
+            --muted: #6b6b80;
+            --income: #00e5a0;
+            --expense: #ff4d6d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Grid noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                    linear-gradient(rgba(0,229,160,0.015) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0,229,160,0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app { position: relative; z-index: 1; }
+
+        /* Header */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            background: rgba(10,10,15,0.95);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-mark {
+            width: 32px; height: 32px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #0a0a0f;
+        }
+
+        .logo-text {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .header-badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            border: 1px solid rgba(0,229,160,0.3);
+            padding: 4px 10px;
+            border-radius: 100px;
+            letter-spacing: 1px;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            border-right: 1px solid var(--border);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        /* Create user form */
+        .create-form {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+        }
+
+        input::placeholder { color: var(--muted); }
+
+        select option { background: var(--bg3); }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0a0a0f;
+        }
+
+        .btn-primary:hover { background: #00ffb3; transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* User list */
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .user-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .user-card:hover {
+            border-color: rgba(0,229,160,0.4);
+            background: var(--bg3);
+        }
+
+        .user-card.active {
+            border-color: var(--accent);
+            background: rgba(0,229,160,0.05);
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .user-info { flex: 1; margin-left: 12px; }
+        .user-name { font-size: 14px; font-weight: 600; }
+        .user-id {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .user-arrow {
+            color: var(--muted);
+            font-size: 16px;
+            transition: color 0.15s;
+        }
+
+        .user-card.active .user-arrow,
+        .user-card:hover .user-arrow { color: var(--accent); }
+
+        /* Main panel */
+        .main {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 16px;
+            color: var(--muted);
+            text-align: center;
+            padding: 80px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            opacity: 0.4;
+        }
+
+        /* User detail */
+        .user-detail { animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 8px;
+            letter-spacing: -1px;
+        }
+
+        .stat-value.income { color: var(--income); }
+        .stat-value.expense { color: var(--expense); }
+        .stat-value.balance { color: var(--text); }
+
+        /* Add transaction */
+        .add-tx-form {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .form-field label {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 6px;
+            font-family: 'Space Mono', monospace;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Transactions list */
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tx-item {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 16px;
+            align-items: center;
+            animation: fadeIn 0.25s ease forwards;
+            transition: border-color 0.15s;
+        }
+
+        .tx-item:hover { border-color: var(--border); background: var(--bg3); }
+
+        .tx-type-badge {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tx-type-badge.INCOME { background: var(--income); box-shadow: 0 0 8px var(--income); }
+        .tx-type-badge.EXPENSE { background: var(--expense); box-shadow: 0 0 8px var(--expense); }
+
+        .tx-info { flex: 1; }
+        .tx-desc { font-size: 14px; font-weight: 600; }
+        .tx-meta {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .tx-amount {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .tx-amount.INCOME { color: var(--income); }
+        .tx-amount.EXPENSE { color: var(--expense); }
+
+        /* Loading & toast */
+        .toast {
+            position: fixed;
+            bottom: 32px; right: 32px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            font-size: 14px;
+            z-index: 999;
+            animation: toastIn 0.3s ease;
+            display: none;
+        }
+
+        .toast.show { display: block; }
+        .toast.success { border-color: var(--accent); color: var(--accent); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .empty-tx {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .user-header-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .user-header-name {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .user-header-id {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .no-users {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--muted);
+            font-size: 13px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <div class="logo">
+            <div class="logo-mark">FT</div>
+            <div class="logo-text">Finance Tracker</div>
+        </div>
+        <div class="header-badge">localhost:8080</div>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div>
+                <div class="section-label">New User</div>
+                <div class="create-form">
+                    <div class="input-group">
+                        <input type="text" id="newUserName" placeholder="Enter name..." />
+                        <button class="btn btn-primary" onclick="createUser()">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="flex:1; overflow-y: auto;">
+                <div class="section-label">Users</div>
+                <div class="users-list" id="usersList">
+                    <div class="no-users">Loading users...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main" id="mainPanel">
+            <div class="empty-state">
+                <div class="empty-icon">◈</div>
+                <h3>Select a user to view transactions</h3>
+                <p style="font-size:14px; opacity:0.5">Create a user on the left or select one to get started</p>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let selectedUserId = null;
+
+    // --- Toast ---
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + type;
+        setTimeout(() => t.className = 'toast', 2500);
+    }
+
+    // --- Load users ---
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API}/users`);
+            const users = await res.json();
+            const list = document.getElementById('usersList');
+            if (!users.length) {
+                list.innerHTML = '<div class="no-users">No users yet. Create one above.</div>';
+                return;
+            }
+            list.innerHTML = users.map(u => `
+      <div class="user-card ${u.id === selectedUserId ? 'active' : ''}"
+           onclick="selectUser(${u.id}, '${u.name}')">
+        <div class="user-avatar">${u.name.charAt(0).toUpperCase()}</div>
+        <div class="user-info">
+          <div class="user-name">${u.name}</div>
+          <div class="user-id">#${u.id}</div>
+        </div>
+        <div class="user-arrow">›</div>
+      </div>
+    `).join('');
+        } catch(e) {
+            document.getElementById('usersList').innerHTML =
+                '<div class="no-users" style="color:#ff4d6d">Cannot connect to API.<br>Is Spring Boot running?</div>';
+        }
+    }
+
+    // --- Create user ---
+    async function createUser() {
+        const input = document.getElementById('newUserName');
+        const name = input.value.trim();
+        if (!name) return showToast('Name is required', 'error');
+
+        try {
+            const res = await fetch(`${API}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            if (res.status === 201) {
+                input.value = '';
+                showToast('User created ✓');
+                await loadUsers();
+            } else {
+                showToast('Failed to create user', 'error');
+            }
+        } catch(e) {
+            showToast('API not reachable', 'error');
+        }
+    }
+
+    // --- Select user ---
+    async function selectUser(id, name) {
+        selectedUserId = id;
+        await loadUsers(); // re-render to update active state
+        await loadUserDetail(id, name);
+    }
+
+    // --- Load user detail ---
+    async function loadUserDetail(id) {
+        const main = document.getElementById('mainPanel');
+        main.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div></div>';
+
+        try {
+            const res = await fetch(`${API}/users/${id}`);
+            const data = await res.json();
+
+            const transactions = data.transactions || [];
+            const income = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + parseFloat(t.amount), 0);
+            const expense = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + parseFloat(t.amount), 0);
+            const balance = income - expense;
+
+            main.innerHTML = `
+      <div class="user-detail">
+        <div class="user-header">
+          <div class="user-header-avatar">${data.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="user-header-name">${data.name}</div>
+            <div class="user-header-id">User ID #${data.id}</div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Balance</div>
+            <div class="stat-value balance">${balance >= 0 ? '+' : ''}$${balance.toFixed(2)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value income">+$${income.toFixed(2)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value expense">-$${expense.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div class="add-tx-form">
+          <div class="section-label" style="margin-bottom:16px">New Transaction</div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Amount</label>
+              <input type="number" id="txAmount" placeholder="0.00" min="0.01" step="0.01"/>
+            </div>
+            <div class="form-field">
+              <label>Type</label>
+              <select id="txType">
+                <option value="INCOME">INCOME</option>
+                <option value="EXPENSE">EXPENSE</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Description</label>
+              <input type="text" id="txDesc" placeholder="e.g. Salary, Groceries..."/>
+            </div>
+            <button class="btn btn-primary" style="margin-top:20px" onclick="createTransaction(${id})">Add</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Transactions (${transactions.length})</div>
+          <div class="tx-list">
+            ${transactions.length === 0
+                ? '<div class="empty-tx">No transactions yet</div>'
+                : transactions.slice().reverse().map(t => `
+                <div class="tx-item">
+                  <div class="tx-type-badge ${t.type}"></div>
+                  <div class="tx-info">
+                    <div class="tx-desc">${t.description || '—'}</div>
+                    <div class="tx-meta">${t.type} · ${t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'just now'}</div>
+                  </div>
+                  <div class="tx-amount ${t.type}">${t.type === 'INCOME' ? '+' : '-'}$${parseFloat(t.amount).toFixed(2)}</div>
+                </div>
+              `).join('')
+            }
+          </div>
+        </div>
+      </div>
+    `;
+        } catch(e) {
+            main.innerHTML = '<div class="empty-state"><h3 style="color:#ff4d6d">Failed to load user</h3></div>';
+        }
+    }
+
+    // --- Create transaction ---
+    async function createTransaction(userId) {
+        const amount = document.getElementById('txAmount').value;
+        const type = document.getElementById('txType').value;
+        const description = document.getElementById('txDesc').value;
+
+        if (!amount || parseFloat(amount) <= 0) return showToast('Enter a valid amount', 'error');
+
+        try {
+            const res = await fetch(`${API}/users/${userId}/transactions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: parseFloat(amount), type, description })
+            });
+            if (res.status === 201) {
+                document.getElementById('txAmount').value = '';
+                document.getElementById('txDesc').value = '';
+                showToast('Transaction added ✓');
+                await loadUserDetail(userId);
+            } else {
+                showToast('Failed to add transaction', 'error');
+            }
+        } catch(e) {
+            showToast('API not reachable', 'error');
+        }
+    }
+
+    // --- Enter key support ---
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && document.activeElement.id === 'newUserName') createUser();
+    });
+
+    // --- Init ---
+    loadUsers();
+    setInterval(loadUsers, 10000); // refresh user list every 10s
+</script>
+</body>
+</html>
