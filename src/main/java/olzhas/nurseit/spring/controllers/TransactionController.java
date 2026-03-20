@@ -6,10 +6,13 @@ import olzhas.nurseit.spring.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/users/{userId}/transactions")
+@RequestMapping("/me/transactions")
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -19,10 +22,23 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
+    @GetMapping
+    public ResponseEntity<List<Transaction>> getAllTransactions() {
+        String userName = getName();
+        return new ResponseEntity<>(transactionService.getMyTransactions(userName), HttpStatus.OK);
+    }
+
     @PostMapping
-    public ResponseEntity<Void> createTransaction(@PathVariable int userId,
-                                                  @Valid @RequestBody Transaction transaction) {
-        transactionService.createTransaction(userId, transaction);
+    public ResponseEntity<Void> createTransaction(@Valid @RequestBody Transaction transaction) {
+        String userName = getName();
+        transactionService.createTransaction(userName, transaction);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    private String getName(){
+        return SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
     }
 }

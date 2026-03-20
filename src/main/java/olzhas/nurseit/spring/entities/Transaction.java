@@ -37,9 +37,9 @@ public class Transaction {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "account_id", referencedColumnName = "id")
 //    @JsonIgnore
-    private User user;
+    private Account account;
 
 
 
